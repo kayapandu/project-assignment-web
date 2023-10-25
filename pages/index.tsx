@@ -1,152 +1,236 @@
 import React, { FC } from "react";
-import Head from "next/head";
-import { useRouter } from "next/router";
 import useTranslation from "next-translate/useTranslation";
-import setLanguage from "next-translate/setLanguage";
+import { AppBar, Button, Container, Grid, Modal, Link, Paper, Typography, Toolbar } from "@material-ui/core";
+import InfiniteScroll from "react-infinite-scroller";
 
-import {
-    Box,
-    Button,
-    Card,
-    CardActions,
-    CardContent,
-    Container,
-    Grid,
-    List,
-    ListItem,
-    ListItemIcon,
-    ListItemText,
-    Typography,
-} from "@material-ui/core";
-import { Check } from "@material-ui/icons";
-import { ROUTES_PATH } from "@constants/config";
+import { makeStyles } from '@material-ui/core/styles';
+
+import { usePokemonList } from "../hooks/usePokemon";
+import PokemonCard from "../components/PokemonCard";
+import { typeColor } from '../constants/constants';
+
+import { POKEMON_ALL, POKEMON_LOGO} from '../assets';
+
+const useStyles = makeStyles((theme) => ({
+    root: {
+      flexGrow: 1,
+    },
+    menuButton: {
+      marginRight: theme.spacing(2),
+    },
+    title: {
+      flexGrow: 1,
+    },
+    link: {
+      margin: theme.spacing(1, 1.5),
+    },
+    heroContent: {
+      backgroundColor: theme.palette.background.paper,
+      padding: theme.spacing(12, 4, 12),
+    },
+    heroButtons: {
+      marginTop: theme.spacing(4),
+    },
+    containerContent: {
+      padding: theme.spacing(8, 0, 6),
+    },
+    cardGrid: {
+      paddingTop: theme.spacing(8),
+      paddingBottom: theme.spacing(8),
+      backgroundColor: '#FFD700',
+    },
+    buttonCheck: {
+      backgroundColor: '#DAA520',
+    },
+    modalContent: {
+      marginTop: 140,
+      width: 600,
+      backgroundColor: "#FFFFFF",
+      border: '2px solid #000',
+      borderRadius: 10,
+      boxShadow: theme.shadows[5],
+      padding: theme.spacing(2, 4, 3),
+    },
+}));
 
 const Index: FC = () => {
     const { t } = useTranslation();
-    const route = useRouter();
-    const { locale } = route;
+    const ref = React.useRef(null);
+    const classes = useStyles();
+    const {
+      isLoading,
+      pokemon,
+      nextPage,
+      getPokemon,
+    } = usePokemonList();
 
-    const tempRequirements = [
-        { desc: "requirement-desc-1", action: null },
-        { desc: "requirement-desc-2", action: "change-language" },
-        { desc: "requirement-desc-3", action: null },
-        { desc: "requirement-desc-4", action: null },
-        { desc: "requirement-desc-5", action: null },
-    ];
+    const [open, setOpen] = React.useState(false);
+    const [activeCard, setActiveCard] = React.useState({});
 
-    const handleChangeLanguage = async () => {
-        await setLanguage(locale === "id" ? "en" : "id");
+    const handleOpen = card => {
+      setActiveCard(card);
+      setOpen(true);
+    };
+  
+    const handleClose = () => {
+      setOpen(false);
     };
 
+    const setToPokedex = () => {
+      ref.current?.scrollIntoView({behavior: 'smooth'});
+    };
+
+    const modalBody = (
+      <Container className={classes.modalContent}>
+        <Grid container spacing={4} style={{ padding: 10 }}>
+          <Grid md={4} style={{ padding: 5 }}>
+            <Paper>
+              <img 
+                src={`https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${activeCard?.id}.png`}
+                style={{ width: 160, background: 'transparent', alignSelf: 'center' }}
+              />
+            </Paper>
+          </Grid>
+          <Grid md={6} style={{ padding: 5 }}>
+            <Typography variant="h6" align="left" color="textPrimary" paragraph style={{ fontWeight: 'bold' }}>
+              {activeCard?.name}
+            </Typography>
+            <Grid container>
+              <Grid sm={6}>
+                <Typography variant="h7" align="left" color="textPrimary" paragraph>
+                  Weight : {activeCard?.weight}
+                </Typography>
+              </Grid>
+              <Grid sm={6}>
+                <Typography variant="h7" align="left" color="textPrimary" paragraph>
+                  Height : {activeCard?.height}
+                </Typography>
+              </Grid>
+              <Grid container>
+                <Grid sm={6}>
+                  <Typography variant="h7" align="left" color="textPrimary" paragraph>
+                    Abilities : 
+                  </Typography>
+                </Grid>
+                <Grid sm={6}>
+                  {activeCard?.abilities?.map((item, idx) => (
+                    <Typography
+                      key={`${idx}-ability`}
+                      variant="h7"
+                      align="left"
+                      color="textPrimary"
+                      paragraph
+                    >
+                      {`- ${item.ability.name} `} {item.ability.is_hidden && '( hidden )'} 
+                    </Typography>
+                  ))}
+                </Grid>
+              </Grid>
+              <Grid container>
+                <Grid sm={6}>
+                  <Typography variant="h7" align="left" color="textPrimary" paragraph>
+                    Type : 
+                  </Typography>
+                </Grid>
+                <Grid container md={6}>
+                  {activeCard?.types?.map(item => (
+                    <Button
+                      size="small"
+                      key={item.type.name}
+                      variant="contained"
+                      style={{ backgroundColor: typeColor[item.type.name], margin: 2}}
+                    >
+                      {item.type.name}
+                    </Button>
+                  ))}
+                </Grid>
+              </Grid>
+            </Grid>
+          </Grid>
+        </Grid>
+        <Button onClick={handleClose} variant="contained" color="primary" className={classes.buttonCheck}>
+          Close
+        </Button>
+      </Container>
+    );
+
     return (
-        <>
-            <Head>
-                <title>REY - Project Test</title>
-            </Head>
-            <Container maxWidth="xl">
-                <Box component="div" m={10}>
-                    <Grid container>
-                        <Grid container justifyContent="center" item xs={12}>
-                            <Typography
-                                align="center"
-                                variant="h4"
-                                component="h3"
-                            >
-                                {t("home:welcome-title")}
-                            </Typography>
-                        </Grid>
-                        <Grid container justifyContent="center" item xs={12}>
-                            <Box component="div" m={2}>
-                                <Container maxWidth="sm">
-                                    <Typography variant="body1" component="p">
-                                        {t("home:welcome-description")}
-                                        <Button
-                                            target="_blank"
-                                            href="https://pokeapi.co/"
-                                            color="primary"
-                                            style={{
-                                                color: "##0082a3",
-                                                fontWeight: "bold",
-                                                textTransform: "capitalize",
-                                            }}
-                                        >
-                                            Pokemon API
-                                        </Button>
-                                    </Typography>
-                                    <Box m="5" height={30} />
-                                    <Card variant="elevation" elevation={8}>
-                                        <CardContent>
-                                            <Typography
-                                                color="textPrimary"
-                                                variant="h6"
-                                                gutterBottom
-                                            >
-                                                {t("home:requirement-title")}
-                                            </Typography>
-                                            <List>
-                                                {tempRequirements.map(
-                                                    (requirement, key) => (
-                                                        <ListItem
-                                                            disableGutters
-                                                            key={`requirement-list-${key}`}
-                                                        >
-                                                            <ListItemIcon>
-                                                                <Check />
-                                                            </ListItemIcon>
-                                                            <ListItemText>
-                                                                {t(
-                                                                    `home:${requirement.desc}`,
-                                                                )}
-                                                                {requirement.action ===
-                                                                    "change-language" && (
-                                                                    <Button
-                                                                        variant="contained"
-                                                                        color="primary"
-                                                                        size="small"
-                                                                        onClick={
-                                                                            handleChangeLanguage
-                                                                        }
-                                                                    >
-                                                                        {t(
-                                                                            `common:language-${locale}`,
-                                                                        )}
-                                                                    </Button>
-                                                                )}
-                                                            </ListItemText>
-                                                        </ListItem>
-                                                    ),
-                                                )}
-                                            </List>
-                                        </CardContent>
-                                        <CardActions>
-                                            <Button
-                                                variant="contained"
-                                                color="primary"
-                                                fullWidth
-                                                onClick={() =>
-                                                    route.push(
-                                                        ROUTES_PATH.pokemon_list,
-                                                    )
-                                                }
-                                            >
-                                                {t("home:requirement-action")}
-                                            </Button>
-                                        </CardActions>
-                                    </Card>
-                                </Container>
-                            </Box>
-                        </Grid>
-                        <Grid container justifyContent="center" item xs={12}>
-                            <Box component="div" m={5}>
-                                <Typography variant="h4" component="h3">
-                                    {t("home:welcome-work")}
-                                </Typography>
-                            </Box>
-                        </Grid>
+    <React.Fragment>
+      <AppBar position="relative" style={{ backgroundColor: '#FFFFFF' }}>
+        <Toolbar>
+          <img src={POKEMON_LOGO.src} style={{ width: 120, background: 'transparent' }}/>
+          <nav>
+            <Link variant="button" color="textPrimary" href="#" className={classes.link}>
+              Home
+            </Link>
+            <Link variant="button" color="textPrimary" href="#" className={classes.link}>
+              Pokemon Type
+            </Link>
+        </nav>
+        </Toolbar>
+        <main>
+        <div className={classes.heroContent}>
+          <Container ref={ref}>
+            <Grid container spacing={4}>
+              <Grid md={6}>
+                <Typography variant="h3" align="left" color="textPrimary" paragraph>
+                  All the Pokemon data you'll ever need in one place!
+                </Typography>
+                <Typography variant="h6" align="left" color="textSecondary" paragraph>
+                  Thousands of data compiled into one piece
+                </Typography>
+                <div className={classes.heroButtons}>
+                  <Grid container spacing={2} justifyContent="flex-start">
+                    <Grid item>
+                      <Button onClick={setToPokedex} variant="contained" color="primary" className={classes.buttonCheck}>
+                        Check Pokedex
+                      </Button>
                     </Grid>
-                </Box>
-            </Container>
-        </>
+                  </Grid>
+                </div>
+              </Grid>
+
+              <Grid md={6}>
+                <img src={POKEMON_ALL.src} style={{maxWidth: 500}}/>
+              </Grid>
+            </Grid>
+          </Container>
+        </div>
+        <Container className={classes.cardGrid}>
+          <Typography variant="h5" align="center" color="textPrimary" paragraph>
+            Pokedex
+          </Typography>
+          <Typography variant="h7" align="center" color="textSecondary" paragraph>
+            All generation pokemon is here
+          </Typography>
+          {!isLoading && pokemon.length === 0 && (
+              <div className="flex justify-center p-10">No Data </div>
+          )}
+          {!isLoading && pokemon.length > 0 && (
+            <InfiniteScroll
+              initialLoad={false}
+              pageStart={0}
+              loadMore={getPokemon}
+              hasMore={Boolean(nextPage)}
+              threshold={10}
+            >
+              <Grid container spacing={2}>
+                {pokemon.map((data) => (
+                  <PokemonCard key={data.name} data={data} onClick={() => handleOpen(data)} />
+                ))}
+              </Grid>
+            </InfiniteScroll>
+          )}
+        </Container>
+        </main>
+        <Modal
+          open={open}
+          onClose={handleClose}
+        >
+          {modalBody}
+        </Modal>
+      </AppBar>
+    </React.Fragment>
     );
 };
 
